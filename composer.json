@@ -7,6 +7,7 @@
       "email": "abenigni@overmob.com"
     }
   ],
+  "minimum-stability": "dev",
   "require": {
     "symfony/console": "^5.1"
   },
