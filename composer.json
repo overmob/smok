@@ -1,0 +1,18 @@
+{
+  "name": "overmob/smok",
+  "description": "Laravel in Google CloudRun environment",
+  "authors": [
+    {
+      "name": "burt",
+      "email": "abenigni@overmob.com"
+    }
+  ],
+  "require": {
+    "symfony/console": "^5.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Smok\\": "src/"
+    }
+  }
+}
