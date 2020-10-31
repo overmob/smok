@@ -1,3 +1,6 @@
-parameters:
+app:
   locale: it
   test: Un testo in configurazione
+
+  conf_path: /Users/burt/workspace_PhpStorm/smok/.smok
+  registration_url: http://test.overmob.com/rasp/register.php

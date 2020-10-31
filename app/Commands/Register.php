@@ -3,6 +3,7 @@
 namespace App\Commands;
 
 use Exception;
+use Noodlehaus\Config;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
@@ -14,25 +15,26 @@ use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 
-class GreetCommand extends Command
+/**
+ * @property Config settings
+ * @property SymfonyStyle io
+ */
+class Register extends Command
 {
-    protected $commandName = 'app:greet';
-    protected $commandDescription = "Greets Someone";
+    protected $commandName = 'register';
+    protected $commandDescription = "Register a device on the server";
 
-    protected $commandArgumentName = "name";
-    protected $commandArgumentDescription = "Who do you want to greet?";
+    protected $commandArgumentMac = "mac";
+    protected $commandArgumentMacDescription = "Optional MAC address of device";
 
     protected $commandOptionName = "cap"; // should be specified like "app:greet John --cap"
     protected $commandOptionDescription = 'If set, it will greet in uppercase letters';
 
-    /**
-     * @var SymfonyStyle
-     */
-    protected $io;
 
     public function __construct()
     {
         parent::__construct();
+
     }
 
     protected function configure()
@@ -41,9 +43,9 @@ class GreetCommand extends Command
             ->setName($this->commandName)
             ->setDescription($this->commandDescription)
             ->addArgument(
-                $this->commandArgumentName,
+                $this->commandArgumentMac,
                 InputArgument::OPTIONAL,
-                $this->commandArgumentDescription
+                $this->commandArgumentMacDescription
             )
             ->addOption(
                 $this->commandOptionName,
@@ -58,6 +60,7 @@ class GreetCommand extends Command
      * and is useful to initialize properties based on the input arguments and options.
      * @param InputInterface $input
      * @param OutputInterface $output
+     * @throws Exception
      */
     protected function initialize(InputInterface $input, OutputInterface $output): void
     {
@@ -65,6 +68,13 @@ class GreetCommand extends Command
         // apply a consistent look to the commands of your application.
         // See https://symfony.com/doc/current/console/style.html
         $this->io = new SymfonyStyle($input, $output);
+        try
+        {
+            $this->settings = new Config(conf('app.conf_path', '.smok'));
+        }catch (Exception $e)
+        {
+            throw new Exception($e->getMessage().'. Try \'smok install\' first.');
+        }
 
     }
 
@@ -84,7 +94,7 @@ class GreetCommand extends Command
     protected function interact(InputInterface $input, OutputInterface $output)
     {
         $this->io->title($this->commandDescription);
-        if ($input->getArgument('name') !== null) return true;
+        if ($input->getArgument('mac') !== null) return true;
 
         $this->io->section('Interactive Wizard');
         $this->io->text([
@@ -96,13 +106,16 @@ class GreetCommand extends Command
             'Now we\'ll ask you for the value of all the missing command arguments.',
         ]);
 
+        #$deviceMac = shell_exec("ifconfig en1 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'");
+        $deviceMac = $this->settings->get('mac');
+
         // Ask for the username if it's not defined
-        $name = $input->getArgument('name');
-        if (null !== $name) {
-            $this->io->text(' > <info>Name</info>: ' . $name);
+        $mac = $input->getArgument('mac');
+        if (null !== $mac) {
+            $this->io->text(' > <info>Mac address</info>: ' . $mac);
         } else {
-            $name = $this->io->ask('Name', 'anonimo');
-            $input->setArgument('name', $name);
+            $mac = $this->io->ask('Mac address', trim($deviceMac));
+            $input->setArgument('mac', $mac);
         }
 
 
@@ -110,30 +123,18 @@ class GreetCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
-
-
-        $value = $this->io->askQuestion(new Question("asdasad", "boh"));
-        $this->io->warning($value);
-        
         try {
 
+            $mac = $input->getArgument($this->commandArgumentMac);
 
-            $name = $input->getArgument($this->commandArgumentName);
 
-            if ($name) {
-                $text = 'Hello ' . $name;
-            } else {
-                $text = 'Hello';
-            }
+            /*if ($input->getOption($this->commandOptionName)) {
+                $text = strtoupper($mac);
+            }*/
 
-            if ($input->getOption($this->commandOptionName)) {
-                $text = strtoupper($text);
-            }
+            $this->io->info("Registazione del device MAC: " . $mac);
 
-            $this->io->info("" . $text);
-
-            $this->io->success("ole");
+            $this->io->success("ole".conf('parameters.test','def'));
 
             return Command::SUCCESS;
 

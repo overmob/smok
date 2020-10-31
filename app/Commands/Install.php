@@ -3,6 +3,8 @@
 namespace App\Commands;
 
 use Exception;
+use Noodlehaus\Config;
+use stdClass;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
@@ -14,21 +16,20 @@ use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 
-class GreetCommand extends Command
+/**
+ * @property Config settings
+ * @property SymfonyStyle io
+ */
+class Install extends Command
 {
-    protected $commandName = 'app:greet';
-    protected $commandDescription = "Greets Someone";
+    protected $commandName = 'install';
+    protected $commandDescription = "Install the application and setup .smok conf dir";
 
-    protected $commandArgumentName = "name";
-    protected $commandArgumentDescription = "Who do you want to greet?";
 
-    protected $commandOptionName = "cap"; // should be specified like "app:greet John --cap"
-    protected $commandOptionDescription = 'If set, it will greet in uppercase letters';
+    protected $commandOptionForce = "force";
+    protected $commandOptionForceDescription = 'If set, it will reset .smok dir and clear all configs';
 
-    /**
-     * @var SymfonyStyle
-     */
-    protected $io;
+
 
     public function __construct()
     {
@@ -40,16 +41,11 @@ class GreetCommand extends Command
         $this
             ->setName($this->commandName)
             ->setDescription($this->commandDescription)
-            ->addArgument(
-                $this->commandArgumentName,
-                InputArgument::OPTIONAL,
-                $this->commandArgumentDescription
-            )
             ->addOption(
-                $this->commandOptionName,
+                $this->commandOptionForce,
                 null,
                 InputOption::VALUE_NONE,
-                $this->commandOptionDescription
+                $this->commandOptionForceDescription
             );
     }
 
@@ -84,57 +80,51 @@ class GreetCommand extends Command
     protected function interact(InputInterface $input, OutputInterface $output)
     {
         $this->io->title($this->commandDescription);
-        if ($input->getArgument('name') !== null) return true;
+        if ($input->getOption('force')) {
+            $input->setOption('force', $this->io->confirm("Are you shure you want to reset all configs in .smok dir?", true));
 
-        $this->io->section('Interactive Wizard');
-        $this->io->text([
-            'If you prefer to not use this interactive wizard, provide the',
-            'arguments required by this command as follows:',
-            '',
-            ' $ php bin/console app:add-user username password email@example.com',
-            '',
-            'Now we\'ll ask you for the value of all the missing command arguments.',
-        ]);
-
-        // Ask for the username if it's not defined
-        $name = $input->getArgument('name');
-        if (null !== $name) {
-            $this->io->text(' > <info>Name</info>: ' . $name);
-        } else {
-            $name = $this->io->ask('Name', 'anonimo');
-            $input->setArgument('name', $name);
         }
+
+        return true;
 
 
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $smokDir = conf('app.conf_path', '.smok');
+        if (!file_exists($smokDir)) mkdir($smokDir, 0755, true);
 
-
-
-        $value = $this->io->askQuestion(new Question("asdasad", "boh"));
-        $this->io->warning($value);
-        
         try {
-
-
-            $name = $input->getArgument($this->commandArgumentName);
-
-            if ($name) {
-                $text = 'Hello ' . $name;
-            } else {
-                $text = 'Hello';
+            if ($input->getOption('force')) {
+                $this->io->write('Clearing ' . $smokDir . ' dir... ');
+                array_map('unlink', array_filter((array)glob("$smokDir/*")));
+                $this->io->writeln('Cleared!');
             }
 
-            if ($input->getOption($this->commandOptionName)) {
-                $text = strtoupper($text);
+            $deviceFile = $smokDir . '/device.json';
+            if (!file_exists($deviceFile)) {
+
+                $if = "en0";
+                $this->io->write('Finding MAC for interface \'' . $if.'\'... ' );
+                $deviceMac = trim(shell_exec("ifconfig $if | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"));
+                if($deviceMac=='') throw new Exception("Can't find MAC address for if ".$if);
+                else $this->io->writeln('OK! '.$deviceMac );
+
+                $this->io->write('Creating ' . $deviceFile.'... ' );
+                $data = new StdClass();
+                $data->mac = $deviceMac;
+                file_put_contents($deviceFile, json_encode($data));
+                $this->io->writeln('Created '.json_encode($data));
+
+            }else
+            {
+                $this->io->writeln("$deviceFile already present.");
             }
 
-            $this->io->info("" . $text);
+            $this->settings = new Config(conf('app.conf_path', '.smok'));
 
-            $this->io->success("ole");
-
+            $this->io->success("Succesfully installed");
             return Command::SUCCESS;
 
         } catch (Exception $exception) {

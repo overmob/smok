@@ -23,7 +23,7 @@ $phar->startBuffering();
 $defaultStub = $phar->createDefaultStub('app/main.php');
 
 // Add the rest of the apps files
-$include = '/^(?=(.*app|.*vendor))(.*)$/i';
+$include = '/^(?=(.*app|.*vendor|.*config))(.*)$/i';
 $phar->buildFromDirectory(__DIR__ , $include);
 
 // Customize the stub to add the shebang
