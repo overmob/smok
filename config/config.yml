@@ -1,0 +1,3 @@
+parameters:
+  locale: it
+  test: Un testo in configurazione

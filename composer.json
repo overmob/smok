@@ -12,8 +12,13 @@
     "symfony/console": "^5.1"
   },
   "autoload": {
+
     "psr-4": {
-      "Smok\\": "src/"
+      "App\\": "app/"
     }
+  },
+
+  "scripts": {
+    "post-install-cmd": ""
   }
 }
