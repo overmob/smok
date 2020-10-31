@@ -12,7 +12,9 @@
     "symfony/console": "^5.1",
     "hassankhan/config": "9999999-dev",
     "symfony/yaml": "9999999-dev",
-    "ext-json": "*"
+    "ext-json": "*",
+    "ext-curl": "*",
+    "ext-zip": "*"
   },
   "autoload": {
 

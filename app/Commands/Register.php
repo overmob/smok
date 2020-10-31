@@ -68,12 +68,10 @@ class Register extends Command
         // apply a consistent look to the commands of your application.
         // See https://symfony.com/doc/current/console/style.html
         $this->io = new SymfonyStyle($input, $output);
-        try
-        {
+        try {
             $this->settings = new Config(conf('app.conf_path', '.smok'));
-        }catch (Exception $e)
-        {
-            throw new Exception($e->getMessage().'. Try \'smok install\' first.');
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage() . '. Try \'smok install\' first.');
         }
 
     }
@@ -132,9 +130,42 @@ class Register extends Command
                 $text = strtoupper($mac);
             }*/
 
-            $this->io->info("Registazione del device MAC: " . $mac);
+            $this->io->write("Registazione del device MAC: " . $mac . '... ');
+            $curl = curl_init();
 
-            $this->io->success("ole".conf('parameters.test','def'));
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => conf('app.registration_url'),
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => "",
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => "POST",
+                CURLOPT_POSTFIELDS => array('mac' => $mac),
+                CURLOPT_HEADER => true,
+            ));
+
+            $response = curl_exec($curl);
+            $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            $header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+            $body = substr($response, $header_size);
+            curl_close($curl);
+
+            if ($httpcode !== 200) {
+                $this->io->error("Server response error HTTP: " . $httpcode );
+                return Command::FAILURE;
+            }else
+            {
+                $this->io->writeln("OK");
+                $this->io->write("Saving registration.json file...");
+                $registrationSettings = json_decode($body);
+                file_put_contents(conf('app.conf_path', '.smok') . '/registration.json', json_encode($registrationSettings, JSON_PRETTY_PRINT));
+                $this->io->write("OK");
+
+                $this->settings = new Config(conf('app.conf_path', '.smok'));
+                $this->io->success("Device succesfully registered\n" . json_encode($registrationSettings, JSON_PRETTY_PRINT));
+            }
 
             return Command::SUCCESS;
 
@@ -142,6 +173,7 @@ class Register extends Command
             $this->io->error($exception->getMessage());
             return Command::FAILURE;
         }
+
 
     }
 }

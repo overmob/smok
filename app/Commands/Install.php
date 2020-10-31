@@ -114,17 +114,19 @@ class Install extends Command
                 $this->io->write('Creating ' . $deviceFile.'... ' );
                 $data = new StdClass();
                 $data->mac = $deviceMac;
-                file_put_contents($deviceFile, json_encode($data));
+                $data->first_install = (new \DateTimeImmutable())->format('c');
+                file_put_contents($deviceFile, json_encode($data, JSON_PRETTY_PRINT));
                 $this->io->writeln('Created '.json_encode($data));
+                $this->settings = new Config(conf('app.conf_path', '.smok'));
+                $this->io->success("Succesfully installed");
 
             }else
             {
                 $this->io->writeln("$deviceFile already present.");
+                $this->io->warning("Already installed. Use --force option to force full reinstall.");
             }
 
-            $this->settings = new Config(conf('app.conf_path', '.smok'));
 
-            $this->io->success("Succesfully installed");
             return Command::SUCCESS;
 
         } catch (Exception $exception) {

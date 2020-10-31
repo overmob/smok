@@ -3,4 +3,7 @@ app:
   test: Un testo in configurazione
 
   conf_path: /Users/burt/workspace_PhpStorm/smok/.smok
+  www_path: /Users/burt/workspace_PhpStorm/smok/.www
+  tmp_payload_zip: /Users/burt/workspace_PhpStorm/smok/.tmp/payload.zip
+  tmp_payload_folder: /Users/burt/workspace_PhpStorm/smok/.tmp/payload/
   registration_url: http://test.overmob.com/rasp/register.php
