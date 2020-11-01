@@ -44,12 +44,12 @@ class UpdateWeb extends Command
             ->setDescription($this->commandDescription)
             ->addOption(
                 $this->commandOptionForce,
-                null,
+                'f',
                 InputOption::VALUE_NONE,
                 $this->commandOptionForceDescription
             )->addOption(
                 $this->commandOptionNodownload,
-                null,
+                null ,
                 InputOption::VALUE_NONE,
                 $this->commandOptionNodownloadDescription
             );
@@ -92,7 +92,8 @@ class UpdateWeb extends Command
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
-        $this->io->title($this->commandDescription);
+        $this->io->title($this->commandName);
+        $this->io->text($this->commandDescription);
         return true;
 
 
@@ -133,6 +134,7 @@ class UpdateWeb extends Command
                 }
 
 
+                $this->io->writeln("Downloading $contentUrl");
                 $progress = $this->io->createProgressBar();
                 $ctx = stream_context_create(array(), array('notification' => function ($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max) use ($output, $progress) {
 
@@ -184,13 +186,19 @@ class UpdateWeb extends Command
             $this->io->writeln(" Unzip complete");
 
             if (file_exists($tmpUncompressedPath . 'info.json')) {
-                if ($this->io->confirm('Will you deploy new app?', true)) {
-                    $wwwDir = conf('app.www_path');
+                $wwwDir = conf('app.www_path');
+                $this->io->write("Deploying ...");
+                if ($this->io->confirm('Will you deploy the new app?', true)) {
+
                     if (file_exists($wwwDir . '_bak')) rrmdir($wwwDir . '_bak');
-                    if (rename($wwwDir, $wwwDir . '_bak')) {
-                        rename($tmpUncompressedPath, $wwwDir);
+                    if (rename($wwwDir, $wwwDir . '_bak') && rename($tmpUncompressedPath, $wwwDir)) {
+                        $this->io->writeln("OK!");
+                        $this->io->success("Successfully updated!");
+                        return Command::SUCCESS;
+                    } else {
+                        throw new Exception("Cannot move $tmpUncompressedPath to $wwwDir");
                     }
-                    $this->io->success("Successfully updated!");
+
                 } else {
                     $this->io->success("Update ready to deploy $tmpUncompressedPath ");
                 }

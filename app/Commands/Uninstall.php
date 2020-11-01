@@ -20,15 +20,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * @property Config settings
  * @property SymfonyStyle io
  */
-class Install extends Command
+class Uninstall extends Command
 {
-    protected $commandName = 'install';
-    protected $commandDescription = "Install the application and setup .smok conf dir";
-
-
-    protected $commandOptionForce = "force";
-    protected $commandOptionForceDescription = 'If set, it will reset .smok dir and clear all configs';
-
+    protected $commandName = 'uninstall';
+    protected $commandDescription = "Uninstall the application and clear config .smok conf dir and others";
 
 
     public function __construct()
@@ -40,13 +35,8 @@ class Install extends Command
     {
         $this
             ->setName($this->commandName)
-            ->setDescription($this->commandDescription)
-            ->addOption(
-                $this->commandOptionForce,
-                null,
-                InputOption::VALUE_NONE,
-                $this->commandOptionForceDescription
-            );
+            ->setDescription($this->commandDescription);
+
     }
 
     /**
@@ -54,6 +44,7 @@ class Install extends Command
      * and is useful to initialize properties based on the input arguments and options.
      * @param InputInterface $input
      * @param OutputInterface $output
+     * @throws Exception
      */
     protected function initialize(InputInterface $input, OutputInterface $output): void
     {
@@ -81,11 +72,6 @@ class Install extends Command
     {
         $this->io->title($this->commandName);
         $this->io->text($this->commandDescription);
-        if ($input->getOption('force')) {
-            $input->setOption('force', $this->io->confirm("Are you shure you want to reset all configs in .smok dir?", true));
-
-        }
-
         return true;
 
 
@@ -93,41 +79,37 @@ class Install extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $smokDir = conf('app.conf_path', '.smok');
-        if (!file_exists($smokDir)) mkdir($smokDir, 0755, true);
-
         try {
-            if ($input->getOption('force')) {
-                $this->io->write('Clearing ' . $smokDir . ' dir... ');
-                array_map('unlink', array_filter((array)glob("$smokDir/*")));
-                $this->io->writeln('Cleared!');
-            }
+            $smokDir = conf('app.conf_path', '.smok');
+            $tmpZip = conf('app.tmp_payload_zip', '.tmp/payload.zip');
+            $tmpFolder = conf('app.tmp_payload_folder', '.tmp/payload');
 
-            $deviceFile = $smokDir . '/device.json';
-            if (!file_exists($deviceFile)) {
-
-                $if = "en0";
-                $this->io->write('Finding MAC for interface \'' . $if.'\'... ' );
-                $deviceMac = trim(shell_exec("ifconfig $if | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"));
-                if($deviceMac=='') throw new Exception("Can't find MAC address for if ".$if);
-                else $this->io->writeln('OK! '.$deviceMac );
-
-                $this->io->write('Creating ' . $deviceFile.'... ' );
-                $data = new StdClass();
-                $data->mac = $deviceMac;
-                $data->first_install = (new \DateTimeImmutable())->format('c');
-                file_put_contents($deviceFile, json_encode($data, JSON_PRETTY_PRINT));
-                $this->io->writeln('Created '.json_encode($data));
-                $this->settings = new Config(conf('app.conf_path', '.smok'));
-                $this->io->success("Succesfully installed");
-
-            }else
-            {
-                $this->io->writeln("$deviceFile already present.");
-                $this->io->warning("Already installed. Use --force option to force full reinstall.");
+            $filename = $smokDir . '/registration.json';
+            if (file_exists($filename) && $this->io->confirm("Delete $filename?", true)) {
+                $this->io->write('Deleting ' . $filename . ' ... ');
+                unlink($filename);
+                $this->io->writeln('OK!');
             }
 
 
+            $filename = $smokDir . '/device.json';
+            if (file_exists($filename) && $this->io->confirm("Delete $filename?", true)) {
+                $this->io->write('Deleting ' . $filename . ' ... ');
+                unlink($filename);
+                $this->io->writeln('OK!');
+            }
+
+            if ((file_exists($tmpZip) || file_exists($tmpFolder)) && $this->io->confirm("Delete tmp files?", true)) {
+                $this->io->write('Deleting ' . $tmpZip . ' ... ');
+                if (file_exists($tmpZip)) unlink($tmpZip);
+                $this->io->writeln('OK!');
+
+                $this->io->write('Deleting ' . $tmpFolder . ' ... ');
+                if (file_exists($tmpFolder)) rrmdir($tmpFolder);
+                $this->io->writeln('OK!');
+            }
+
+            $this->io->success('Unistall succesfull');
             return Command::SUCCESS;
 
         } catch (Exception $exception) {

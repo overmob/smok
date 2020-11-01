@@ -14,6 +14,7 @@ $application = new Application();
 # add our commands
 $application->add(new \App\Commands\GreetCommand());
 $application->add(new \App\Commands\Install());
+$application->add(new \App\Commands\Uninstall());
 $application->add(new \App\Commands\Register());
 $application->add(new \App\Commands\UpdateWeb());
 $application->run();

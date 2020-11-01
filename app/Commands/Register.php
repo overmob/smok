@@ -91,7 +91,8 @@ class Register extends Command
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
-        $this->io->title($this->commandDescription);
+        $this->io->title($this->commandName);
+        $this->io->text($this->commandDescription);
         if ($input->getArgument('mac') !== null) return true;
 
         $this->io->section('Interactive Wizard');
