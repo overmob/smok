@@ -81,6 +81,7 @@ class Install extends Command
     {
         $this->io->title($this->commandName);
         $this->io->text($this->commandDescription);
+        $this->io->newLine();
         if ($input->getOption('force')) {
             $input->setOption('force', $this->io->confirm("Are you shure you want to reset all configs in .smok dir?", true));
 
@@ -106,7 +107,7 @@ class Install extends Command
             $deviceFile = $smokDir . '/device.json';
             if (!file_exists($deviceFile)) {
 
-                $if = "en0";
+                $if = conf('app.main_eth');
                 $this->io->write('Finding MAC for interface \'' . $if.'\'... ' );
                 $deviceMac = trim(shell_exec("ifconfig $if | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"));
                 if($deviceMac=='') throw new Exception("Can't find MAC address for if ".$if);

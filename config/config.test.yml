@@ -1,0 +1,10 @@
+app:
+  locale: it
+
+  main_eth: en0;
+  conf_path: /Users/burt/workspace_PhpStorm/smok/.smok
+  www_path: /Users/burt/workspace_PhpStorm/smok/.www
+  www_backup_path: /home/pi/.tmp/www_bak/
+  tmp_payload_zip: /Users/burt/workspace_PhpStorm/smok/.tmp/payload.zip
+  tmp_payload_folder: /Users/burt/workspace_PhpStorm/smok/.tmp/payload/
+  registration_url: http://test.overmob.com/rasp/register.php

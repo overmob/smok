@@ -1,0 +1,10 @@
+app:
+  locale: it
+
+  main_eth: eth0
+  conf_path: /home/pi/.smok
+  www_path: /var/www/html
+  www_backup_path: /home/pi/.tmp/www_bak/
+  tmp_payload_zip: /home/pi/.tmp/payload.zip
+  tmp_payload_folder: /home/pi/.tmp/payload/
+  registration_url: http://test.overmob.com/rasp/register.php

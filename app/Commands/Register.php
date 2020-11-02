@@ -105,7 +105,7 @@ class Register extends Command
             'Now we\'ll ask you for the value of all the missing command arguments.',
         ]);
 
-        #$deviceMac = shell_exec("ifconfig en1 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'");
+
         $deviceMac = $this->settings->get('mac');
 
         // Ask for the username if it's not defined

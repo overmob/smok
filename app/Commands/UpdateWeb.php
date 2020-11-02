@@ -93,7 +93,8 @@ class UpdateWeb extends Command
     protected function interact(InputInterface $input, OutputInterface $output)
     {
         $this->io->title($this->commandName);
-        $this->io->text($this->commandDescription);
+        $this->io->section($this->commandDescription);
+        $this->io->newLine(1);
         return true;
 
 
@@ -101,6 +102,7 @@ class UpdateWeb extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+
         try {
             $contentUrl = $this->settings->get('content_url', null);
             $contentVersion = $this->settings->get('content_version', null);
@@ -187,11 +189,12 @@ class UpdateWeb extends Command
 
             if (file_exists($tmpUncompressedPath . 'info.json')) {
                 $wwwDir = conf('app.www_path');
-                $this->io->write("Deploying ...");
-                if ($this->io->confirm('Will you deploy the new app?', true)) {
+                $bakDir = conf('app.www_backup_path');
 
-                    if (file_exists($wwwDir . '_bak')) rrmdir($wwwDir . '_bak');
-                    if (rename($wwwDir, $wwwDir . '_bak') && rename($tmpUncompressedPath, $wwwDir)) {
+                if ($this->io->confirm('Will you deploy the new app?', true)) {
+                    $this->io->write("Deploying ...");
+                    if (file_exists($bakDir)) rrmdir($bakDir);
+                    if (rename($wwwDir, $bakDir) && rename($tmpUncompressedPath, $wwwDir)) {
                         $this->io->writeln("OK!");
                         $this->io->success("Successfully updated!");
                         return Command::SUCCESS;

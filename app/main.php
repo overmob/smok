@@ -7,7 +7,10 @@ use Symfony\Component\Console\Application;
 
 
 // Load all supported files in a directory
-$conf = new Config(__DIR__.'/../config/config.yml');
+$env = getenv('APP_ENV', 'prod');
+if ($env == null) $env = 'prod';
+
+$conf = new Config(__DIR__ . '/../config/config.' . $env . '.yml');
 
 $application = new Application();
 
@@ -26,15 +29,16 @@ function conf($key, $default = null)
     return $conf->get($key, $default);
 }
 
-function rrmdir($dir) {
+function rrmdir($dir)
+{
     if (is_dir($dir)) {
         $objects = scandir($dir);
         foreach ($objects as $object) {
             if ($object != "." && $object != "..") {
-                if (is_dir($dir. DIRECTORY_SEPARATOR .$object) && !is_link($dir."/".$object))
-                    rrmdir($dir. DIRECTORY_SEPARATOR .$object);
+                if (is_dir($dir . DIRECTORY_SEPARATOR . $object) && !is_link($dir . "/" . $object))
+                    rrmdir($dir . DIRECTORY_SEPARATOR . $object);
                 else
-                    unlink($dir. DIRECTORY_SEPARATOR .$object);
+                    unlink($dir . DIRECTORY_SEPARATOR . $object);
             }
         }
         rmdir($dir);
