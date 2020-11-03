@@ -7,19 +7,23 @@ use Symfony\Component\Console\Application;
 
 
 // Load all supported files in a directory
-$env = getenv('APP_ENV', 'prod');
-if ($env == null) $env = 'prod';
+$env = getenv('APP_ENV');
+if ($env == null) {
+    $env = 'prod';
+    putenv("APP_ENV=$env");
+}
 
 $conf = new Config(__DIR__ . '/../config/config.' . $env . '.yml');
 
 $application = new Application();
 
 # add our commands
-$application->add(new \App\Commands\GreetCommand());
+$application->add(new \App\Commands\Test());
 $application->add(new \App\Commands\Install());
 $application->add(new \App\Commands\Uninstall());
 $application->add(new \App\Commands\Register());
 $application->add(new \App\Commands\UpdateWeb());
+$application->add(new \App\Commands\Tunnel());
 $application->run();
 
 
